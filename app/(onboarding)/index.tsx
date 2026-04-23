@@ -1,17 +1,14 @@
 import { images } from '@/lib/images';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Dimensions, FlatList, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
-import Animated, {
-  useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
-  withTiming
-} from 'react-native-reanimated';
+import { Animated, Dimensions, FlatList, Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Index() {
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   const { width, height } = Dimensions.get('window');
   const insets = useSafeAreaInsets();
+
 
   const onboardingData = [
     {
@@ -66,41 +63,76 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
     }
   };
 
-  const scrollX = useSharedValue(0);
+  // const opacity = useRef(new Animated.Value(0)).current;
+  // const translate = useRef(new Animated.Value(-200)).current
 
-  const onScroll = useAnimatedScrollHandler((event) => {
-    scrollX.value = event.contentOffset.x;
-  });
+  // useEffect(() => {
+  //   Animated.parallel([
+  //     Animated.timing(opacity, {
+  //       toValue: 1,
+  //       duration: 1000,
+  //       useNativeDriver: true,
+  //     }),
+  //     Animated.timing(translate, {
+  //       toValue: 0,
+  //       duration: 300,
+  //       useNativeDriver: true
+  //     })
+  //   ]).start();
+  // }, []);
 
-  // 1. Tạo shared value
-  const translateX = useSharedValue(0);
-
-  // 2. Gắn vào style
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-
-  let [count, setCount] = useState(0)
-
-  // 3. Khi bấm → animate
-  const handleMove = () => {
-    translateX.value = withTiming(
-      translateX.value === 0 ? 200 : 0,
-      { duration: 500 }
-    );
-    setCount(count++);
-  };
+  // 
+  const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    console.log('chạy đúng 1 lần');
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
   }, []);
+
+  // 🔥 interpolate giống keyframes
+
+  const translateX = anim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [-100, 30, 0],
+  });
+
+  const opacity = anim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0.6, 1],
+  });
+
+  const scale = anim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.8, 1.2, 1],
+  });
+
+  
+  // 
+  const boxMove = useRef(new Animated.Value(100)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  Animated.parallel([
+    Animated.spring(boxMove, {
+      toValue: 0,
+      friction: 10,
+      tension: 40,
+      useNativeDriver: true,
+    }),
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }),
+  ]).start();
+
 
   return (
 
 
-    <View className="flex-1">
-      <Animated.FlatList
+    <View className="flex-1 relative">
+      <FlatList
         ref={flatListRef}
         data={onboardingData}
         horizontal
@@ -109,22 +141,32 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
         keyExtractor={(item) => item.id}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerClassName=''
+        contentContainerClassName='relative'
         renderItem={({ item }) => (
           <View style={{ width, height }} className='flex-1 relative'>
             <ImageBackground
               source={item.image}
+              style={{ width, height }}
               className='h-full w-full absolute'
             />
             <View className='relative top-28 px-5'>
-              <Text
-                key={`title-${currentIndex}`}
+              <Animated.Text
                 className='text-center text-bold text-3xl'
-              >{item.title}</Text>
-              <Text 
-                key={`sub-${currentIndex}`}
+                style={{
+                  opacity,
+                  transform: [
+                    { translateX },
+                    { scale },
+                  ]
+                }}
+              >{item.title}</Animated.Text>
+              <Animated.Text 
                 className='text-center text-bold text-3xl mt-1'
-              >{item.subtitle}</Text>
+                style={{
+                  opacity: fadeAnim,
+                  transform: [{ translateY: boxMove }],
+                }}
+              >{item.subtitle}</Animated.Text>
               {
                 item.sub_image && (
                   <View className='flex-center'>
@@ -137,7 +179,6 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
                 )
               }
               <Text
-                key={`desc-${currentIndex}`}
                 className='text-regular text-md mt-5 text-center'
               >{item.description}</Text>
             </View>
@@ -166,11 +207,13 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
             style={{ borderRadius: 14 }}
             className=''
           >
-            <AnimatedTouchable onPress={handleMove} className="py-4">
-              <Text className="text-white text-semibold text-lg text-center">
-                Get started ({count})
+            <TouchableOpacity className="py-4">
+              <Text 
+                className="text-white text-semibold text-lg text-center"
+              >
+                Get started
               </Text>
-            </AnimatedTouchable>
+            </TouchableOpacity>
           </LinearGradient>
         </View>
       </View>
