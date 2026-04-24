@@ -93,7 +93,6 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   }, []);
 
   // 🔥 interpolate giống keyframes
-
   const translateX = anim.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [-100, 30, 0],
@@ -110,14 +109,19 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   });
 
   
-  // 
+  //============== Dạng fadeinUp và Opacity
   const boxMove = useRef(new Animated.Value(100)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  Animated.parallel([
-    Animated.spring(boxMove, {
+  Animated.parallel([ // Parallel: Dùng gộp nhiều animation
+    Animated.spring(boxMove, { // Spring là dạng nảy
       toValue: 0,
-      friction: 10,
-      tension: 40,
+      // friction: 12,
+      // tension: 40,
+
+      stiffness: 100, // Để càng cao lực mạnh, nó sẽ bật về ngay
+      damping: 10, // Giảm dao động
+      mass: 1, // Nặng chuyển động chậm, quán tính lớn
+
       useNativeDriver: true,
     }),
     Animated.timing(fadeAnim, {
@@ -126,7 +130,6 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
       useNativeDriver: true,
     }),
   ]).start();
-
 
   return (
 
